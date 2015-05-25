@@ -61,8 +61,9 @@ DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth);
 
 // Create the remote Amazon S3 URL for the file we're about to upload...
 currFileNameStr = "test01.tmp";
-// Not the URL scheme also has the "host" or "authority" set.
+// Note that the URL scheme also has the "host" or "authority" set.
 // E.g. s3://s3.amazonaws.com/<containter>/<path>
+// This is not typical for many "s3://" schemed URLs but is required with this library.
 String currUriStr = String.format("%s://%s/%s/%s", 
                    SS3Constants.S3SCHEME, currHost, currContainerStr, currFileNameStr);
 FileObject currFile = currMan.resolveFile(currUriStr, opts);
