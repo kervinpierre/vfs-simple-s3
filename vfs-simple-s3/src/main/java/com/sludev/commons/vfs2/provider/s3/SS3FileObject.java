@@ -70,7 +70,7 @@ public class SS3FileObject extends AbstractFileObject
     /**
      * Convenience method that returns the container ( i.e. "bucket ) and path from the current URL.
      * 
-     * @return 
+     * @return A tuple containing the bucket name and the path.
      */
     private Pair<String, String> getContainerAndPath()
     {

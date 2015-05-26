@@ -29,8 +29,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
- * @author kervin
+ * File-System object represents a connect to Amazon S3 via a single client.
+ * 
+ * @author Kervin Pierre
  */
 public class SS3FileSystem
     extends AbstractFileSystem
@@ -40,6 +41,11 @@ public class SS3FileSystem
     
     private final AmazonS3Client client;
 
+    /**
+     * The single client for interacting with Amazon S3.
+     * 
+     * @return 
+     */
     protected AmazonS3Client getClient()
     {
         return client;

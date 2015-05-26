@@ -36,10 +36,11 @@ import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
+import org.junit.FixMethodOrder;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestWatcher;
+import org.junit.runners.MethodSorters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author kervin
  */
+@FixMethodOrder(MethodSorters.NAME_ASCENDING)
 public class SS3FileProviderTest
 {
     private static final Logger log = LoggerFactory.getLogger(SS3FileProviderTest.class);
@@ -69,6 +71,18 @@ public class SS3FileProviderTest
          * in our source code.
          */
         testProperties = SS3TestProperties.GetProperties();
+        
+        try
+        {
+            /**
+             * Setup the remote folders for testing
+             */
+            uploadFileSetup02();
+        }
+        catch (Exception ex)
+        {
+            log.debug("Error setting up remote folder structure.  Have you set the test001.properties file?", ex);
+        }
     }
     
     @BeforeClass
@@ -82,8 +96,9 @@ public class SS3FileProviderTest
     }
     
     @After
-    public void tearDown()
+    public void tearDown() throws Exception
     {
+        removeFileSetup02();
     }
 
     /**
@@ -91,7 +106,7 @@ public class SS3FileProviderTest
      * @throws java.lang.Exception
      */
     @Test
-    public void uploadFile01() throws Exception
+    public void A001_uploadFile() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
@@ -141,7 +156,7 @@ public class SS3FileProviderTest
      * @throws Exception 
      */
     @Test
-    public void downloadFile01() throws Exception
+    public void A002_downloadFile() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
@@ -182,44 +197,8 @@ public class SS3FileProviderTest
         currFile2.copyFrom(currFile, Selectors.SELECT_SELF);
     }
     
-    /**
-     * Delete a previously uploaded file.
-     * 
-     * @throws Exception 
-     */
     @Test
-    public void deleteFile01() throws Exception
-    {
-        String currAccountStr = testProperties.getProperty("s3.access.id"); 
-        String currKey = testProperties.getProperty("s3.access.secret");
-        String currContainerStr = testProperties.getProperty("s3.test0001.bucket.name");
-        String currHost = testProperties.getProperty("s3.host");
-        String currRegion = testProperties.getProperty("s3.region");
-        String currFileNameStr;
-        
-        SS3FileProvider currSS3 = new SS3FileProvider();
-        
-        DefaultFileSystemManager currMan = new DefaultFileSystemManager();
-        currMan.addProvider(SS3Constants.S3SCHEME, currSS3);
-        currMan.init(); 
-        
-        StaticUserAuthenticator auth = new StaticUserAuthenticator("", currAccountStr, currKey);
-        FileSystemOptions opts = new FileSystemOptions(); 
-        DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth); 
-        
-        currFileNameStr = "test01.tmp";
-        String currUriStr = String.format("%s://%s/%s/%s", 
-                           SS3Constants.S3SCHEME, currHost, currContainerStr, currFileNameStr);
-        FileObject currFile = currMan.resolveFile(currUriStr, opts);
-        
-        log.info( String.format("deleting '%s'", currUriStr));
-        
-        Boolean delRes = currFile.delete();
-        Assert.assertTrue(delRes);
-    }
-    
-    @Test
-    public void exist01() throws Exception
+    public void A003_exist() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
@@ -261,7 +240,7 @@ public class SS3FileProviderTest
     }
     
     @Test
-    public void getContentSize01() throws Exception
+    public void A004_getContentSize() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
@@ -295,52 +274,81 @@ public class SS3FileProviderTest
     }
     
     @Test
-    public void uploadFileSetup02() throws Exception
+    public void A005_testContent() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
         String currContainerStr = testProperties.getProperty("s3.test0001.bucket.name");
         String currHost = testProperties.getProperty("s3.host");
         String currRegion = testProperties.getProperty("s3.region");
+        String currFileNameStr;
         
-        File temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 01");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("uploadFile02/dir01/file01"));
-        temp.delete();
+        SS3FileProvider currSS3 = new SS3FileProvider();
         
-        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 02");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("uploadFile02/dir01/file02"));
-        temp.delete();
+        DefaultFileSystemManager currMan = new DefaultFileSystemManager();
+        currMan.addProvider(SS3Constants.S3SCHEME, currSS3);
+        currMan.init(); 
         
-        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 03");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("uploadFile02/dir02/file03"));
-        temp.delete();
+        StaticUserAuthenticator auth = new StaticUserAuthenticator("", currAccountStr, currKey);
+        FileSystemOptions opts = new FileSystemOptions(); 
+        DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth); 
         
-        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 04");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("uploadFile02/file04"));
-        temp.delete();
+        currFileNameStr = "file05";
+        String currUriStr = String.format("%s://%s/%s/%s", 
+                           SS3Constants.S3SCHEME, currHost, currContainerStr, currFileNameStr);
+        FileObject currFile = currMan.resolveFile(currUriStr, opts);
         
-        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 05");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("file05"));
-        temp.delete();
+        FileContent content = currFile.getContent();
+        long size = content.getSize();
+        Assert.assertTrue( size >= 0);
         
-        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 06");      
-        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
-                               Paths.get("uploadFile02/dir02/file06"));
-        temp.delete();
+        long modTime = content.getLastModifiedTime();
+        Assert.assertTrue(modTime>0);
     }
-  
+    
+    /**
+     * Delete a previously uploaded file.
+     * 
+     * @throws Exception 
+     */
+    @Test
+    public void A006_deleteFile() throws Exception
+    {
+        String currAccountStr = testProperties.getProperty("s3.access.id"); 
+        String currKey = testProperties.getProperty("s3.access.secret");
+        String currContainerStr = testProperties.getProperty("s3.test0001.bucket.name");
+        String currHost = testProperties.getProperty("s3.host");
+        String currRegion = testProperties.getProperty("s3.region");
+        String currFileNameStr;
+        
+        SS3FileProvider currSS3 = new SS3FileProvider();
+        
+        DefaultFileSystemManager currMan = new DefaultFileSystemManager();
+        currMan.addProvider(SS3Constants.S3SCHEME, currSS3);
+        currMan.init(); 
+        
+        StaticUserAuthenticator auth = new StaticUserAuthenticator("", currAccountStr, currKey);
+        FileSystemOptions opts = new FileSystemOptions(); 
+        DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth); 
+        
+        currFileNameStr = "test01.tmp";
+        String currUriStr = String.format("%s://%s/%s/%s", 
+                           SS3Constants.S3SCHEME, currHost, currContainerStr, currFileNameStr);
+        FileObject currFile = currMan.resolveFile(currUriStr, opts);
+        
+        log.info( String.format("deleting '%s'", currUriStr));
+        
+        Boolean delRes = currFile.delete();
+        Assert.assertTrue(delRes);
+    }
+    
     /**
      * By default FileObject.getChildren() will use doListChildrenResolved() if available
      * 
      * @throws Exception 
      */
     @Test
-    public void listChildren01() throws Exception
+    public void A007_listChildren() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
@@ -381,36 +389,69 @@ public class SS3FileProviderTest
         }
     }
     
-    @Test
-    public void testContent() throws Exception
+    public void uploadFileSetup02() throws Exception
     {
         String currAccountStr = testProperties.getProperty("s3.access.id"); 
         String currKey = testProperties.getProperty("s3.access.secret");
         String currContainerStr = testProperties.getProperty("s3.test0001.bucket.name");
         String currHost = testProperties.getProperty("s3.host");
         String currRegion = testProperties.getProperty("s3.region");
-        String currFileNameStr;
         
-        SS3FileProvider currSS3 = new SS3FileProvider();
+        File temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 01");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("uploadFile02/dir01/file01"));
+        temp.delete();
         
-        DefaultFileSystemManager currMan = new DefaultFileSystemManager();
-        currMan.addProvider(SS3Constants.S3SCHEME, currSS3);
-        currMan.init(); 
+        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 02");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("uploadFile02/dir01/file02"));
+        temp.delete();
         
-        StaticUserAuthenticator auth = new StaticUserAuthenticator("", currAccountStr, currKey);
-        FileSystemOptions opts = new FileSystemOptions(); 
-        DefaultFileSystemConfigBuilder.getInstance().setUserAuthenticator(opts, auth); 
+        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 03");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("uploadFile02/dir02/file03"));
+        temp.delete();
         
-        currFileNameStr = "file05";
-        String currUriStr = String.format("%s://%s/%s/%s", 
-                           SS3Constants.S3SCHEME, currHost, currContainerStr, currFileNameStr);
-        FileObject currFile = currMan.resolveFile(currUriStr, opts);
+        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 04");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("uploadFile02/file04"));
+        temp.delete();
         
-        FileContent content = currFile.getContent();
-        long size = content.getSize();
-        Assert.assertTrue( size >= 0);
+        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 05");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("file05"));
+        temp.delete();
         
-        long modTime = content.getLastModifiedTime();
-        Assert.assertTrue(modTime>0);
+        temp = SS3TestUtils.createTempFile("uploadFile02", "tmp", "File 06");      
+        SS3TestUtils.uploadFile(currAccountStr, currHost, currKey, currContainerStr, temp.toPath(),
+                               Paths.get("uploadFile02/dir02/file06"));
+        temp.delete();
+    }
+    
+    public void removeFileSetup02() throws Exception
+    {
+        String currAccountStr = testProperties.getProperty("s3.access.id"); 
+        String currKey = testProperties.getProperty("s3.access.secret");
+        String currContainerStr = testProperties.getProperty("s3.test0001.bucket.name");
+        String currHost = testProperties.getProperty("s3.host");
+        String currRegion = testProperties.getProperty("s3.region");
+            
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("uploadFile02/dir01/file01"));
+              
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("uploadFile02/dir01/file02"));
+        
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("uploadFile02/dir02/file03"));
+    
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("uploadFile02/file04"));
+     
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("file05"));
+   
+        SS3TestUtils.deleteFile(currAccountStr, currHost, currKey, currContainerStr,
+                               Paths.get("uploadFile02/dir02/file06"));
     }
 }
